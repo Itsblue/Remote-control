@@ -14,7 +14,7 @@ boolean buttonState = 0;
 
 const byte address[6] = "00001";
 
-trans_data_struct trans_data;
+trans_data_s trans_data;
 
 void setup() {
   pinMode(BUTTON, INPUT);
