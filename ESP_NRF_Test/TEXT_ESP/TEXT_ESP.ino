@@ -1,4 +1,8 @@
 
+/*
+ * Reciever
+ */
+
 #include <ESP8266WiFi.h>
 #include <SPI.h>
 #include <nRF24L01.h>
@@ -8,7 +12,7 @@
 
 
 
-RF24 radio(D4, D8); // CNS, CE
+RF24 radio(D4, D3); // CNS, CE
 
 const byte address[6] = "00001";
 boolean buttonState = 0;
@@ -18,7 +22,7 @@ void setup() {
   Serial.begin(9600);
   radio.begin();
   radio.openReadingPipe(0, address);
-  radio.setPALevel(RF24_PA_MAX);
+  radio.setPALevel(RF24_PA_MIN);
   radio.startListening();
   Serial.println("hello");
   pinMode(led, OUTPUT);
@@ -28,7 +32,7 @@ void setup() {
 void loop() {
 
   radio.startListening();
-  while (!radio.available());
+  while (!radio.available()){delay(10);}
   radio.read(&buttonState, sizeof(buttonState));
   if (buttonState == HIGH) {
     digitalWrite(led, HIGH);
