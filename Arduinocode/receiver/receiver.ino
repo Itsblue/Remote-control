@@ -5,10 +5,10 @@
 #include "receiver.h";
 
 //Radio Configuration
-bool radioNumber=0;
+//bool radioNumber=0;
 RF24 radio(D4, D3);
-byte addresses[][6] = {"1Node","2Node"};
-bool role = 0;  //Control transmit/receive
+byte addresses[6] = "00001";
+//bool role = 0;  //Control transmit/receive
 
 // Create variables to control servo value
 
@@ -27,9 +27,9 @@ void setup() {
   Serial.begin(9600);       // Send data back for debugging purposes
   
   radio.begin();
-  radio.setPALevel(RF24_PA_MAX);
-  radio.openWritingPipe(addresses[0]);
-  radio.openReadingPipe(1,addresses[1]);
+  radio.setPALevel(RF24_PA_MIN);
+  //radio.openWritingPipe(addresses[0]);
+  radio.openReadingPipe(0, addresses);
   radio.startListening();  
 }
 
@@ -37,7 +37,11 @@ void loop() {
 
   delay(10);
   if(radio.available()){
-    radio.read(&trans_data,sizeof(trans_data));
+    radio.read(&trans_data,sizeof(trans_data_s));
+    Serial.println(sizeof(trans_data));
+    Serial.println(sizeof(trans_data.hndshk_sig));
+    Serial.println(sizeof(trans_data.trans));
+
     if(trans_data.trans == HANDSHAKE){
          Serial.print("Handshake read.");
          Serial.print(" Value is:");
@@ -57,7 +61,7 @@ void loop() {
          //motor.write(valmot);
          
          //}
-    }
+      }
   } else {Serial.println("No radio");}
   
 
