@@ -1,6 +1,7 @@
 #ifndef Remote_Control_Sender_H
 #define Remote_Control_Sender_H
 
+#include <stdint.h>
 #define BUTTON 4
 
 #define RF24_CNS 7    // this is 7 for the Arduino Nano
@@ -22,7 +23,7 @@ typedef struct but_struct{
 typedef struct trans_data_struct
 {
   send_rec_e trans;      //type of data, command
-  int hndshk_sig;        //handshake value
+  byte hndshk_sig;        //handshake value
   but_s but;
 } trans_data_s;// = {HNDSHK, 0,{COMMAND,NOUPDATE,LOW}};
 #endif
