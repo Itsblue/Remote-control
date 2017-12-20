@@ -1,18 +1,10 @@
+#include <Arduino.h>
+#include <U8g2lib.h>
+#include <Wire.h>
+//#include "SSD1306.h"
+//#include <Adafruit_SSD1306.h>
 
-/*
-   Dec 2014 - TMRh20 - Updated
-   Derived from examples by J. Coliz <maniacbug@ymail.com>
-*/
-/**
- * Example for efficient call-response using ack-payloads 
- * 
- * This example continues to make use of all the normal functionality of the radios including 
- * the auto-ack and auto-retry features, but allows ack-payloads to be written optionlly as well. 
- * This allows very fast call-response communication, with the responding radio never having to 
- * switch out of Primary Receiver mode to send back a payload, but having the option to switch to 
- * primary transmitter if wanting to initiate communication instead of respond to a commmunication. 
- */
- 
+//#include "fonts.h"  
 #include <Servo.h>
 #include <SPI.h>
 #include "RF24.h"
@@ -24,6 +16,15 @@
 // Create variables to control servo value
 Servo servo;
 Servo motor;
+
+
+// internal defines for the OLED display ...
+U8G2_SSD1306_128X64_NONAME_1_SW_I2C display(U8G2_R0, /* clock=*/ SCL, /* data=*/ SDA, /* reset=*/ U8X8_PIN_NONE);   // All Boards without Reset of the Display
+
+//#define DISPSDA 5                            // display pin1 - was 10
+//#define DISPSCI 4                             // display pin2 - was 9
+//#define DISPADDR 0x3c                         // display address
+//SSD1306  display(DISPADDR, DISPSDA, DISPSCI); //initialize display for sda and scl GPOI`s 12 and 14 at the adress 0x3c
 
 /********************************************************************/
 // Setup a oneWire instance to communicate with any OneWire devices  
@@ -55,10 +56,14 @@ unsigned long key_control;                                                      
 unsigned long key_client;                                                             // this is a randomized key for the second transmission from the client to control
 unsigned long key_communication;                                                       // this is the fina key for the whole communication afterwards
 transcv_s radio_data;
+char temp_string[6];
 
 void setup(){
 
   Serial.begin(115200);
+
+  pinMode(3, OUTPUT); 
+  digitalWrite(3,LOW);
 
   // Get the radio number as set by the radio select pin - RADIO0 is default
   pinMode(RADIO_SEL, INPUT);
@@ -96,6 +101,9 @@ void setup(){
     role = control;                                 //only the client has a temperature sensor so far
   }
 
+  //initialise OLED and display Welcome Message ...
+  display.begin();
+  
 }
 
 void loop(void) {
@@ -139,7 +147,15 @@ void loop(void) {
     if ( timeout ){                                             // Describe the results
         Serial.println(F("Failed, response timed out."));
         //add error handling here if client does not send response in time
-    }else{
+        display.firstPage();
+        do {
+          display.setFontPosCenter();
+          display.setFont(u8g2_font_profont12_mf);
+          display.setCursor(10,32);
+          display.print(F("Keine Verbindung :-("));
+        } while ( display.nextPage() );
+    }
+    else{
         radio.read( &client_data, sizeof(client_data) );                  // Read it, and display the response time
         unsigned long timer = micros();
         //Serial.print(F("Got response counter:"));
@@ -152,7 +168,25 @@ void loop(void) {
         //Serial.print(timer-client_data.time);
         //Serial.println(F(" microseconds"));
         counter++;                                  // Increment the counter variable
-    
+
+
+        int ypos = 64-42/2;
+        snprintf ( temp_string, sizeof(temp_string),"%d.%1d", int(client_data.temperature), int(abs(client_data.temperature - int(client_data.temperature))*10 + 0.5));
+        Serial.println(temp_string); 
+        
+        display.setFontPosCenter();
+        display.setFont(u8g2_font_logisoso34_tn);
+        int xpos = (128-display.getStrWidth(temp_string))/2 - 10;
+        
+        display.firstPage();
+        do {
+          display.setFont(u8g2_font_logisoso34_tn);
+          display.setCursor(xpos,ypos);
+          display.print(temp_string);
+          display.setCursor(xpos + display.getStrWidth(temp_string)+ 5,ypos-15);
+          display.setFont(u8g2_font_ncenB12_tr);
+          display.print(F("°C"));
+        } while ( display.nextPage() );
     }
 
     delay(1000);  // Try again later
